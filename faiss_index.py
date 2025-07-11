@@ -5,15 +5,11 @@ import pickle
 class FaissIndex:
     def __init__(self, dim=768):
         self.dim = dim
-        self.index = faiss.IndexFlatIP(dim)  # cosine sim with normalized vectors
-        self.id_map = []  # stores metadata like (doc_id, chunk_text)
+        self.index = faiss.IndexFlatIP(dim)
+        self.id_map = []
 
     def add_embeddings(self, embeddings: np.ndarray, metadata: list):
-        """
-        embeddings: np.ndarray shape=(n, dim), must be normalized
-        metadata: List of tuples (doc_id, chunk_text)
-        """
-        assert embeddings.shape[0] == len(metadata), "Embeddings and metadata length mismatch"
+        assert embeddings.shape[0] == len(metadata)
         faiss.normalize_L2(embeddings)
         self.index.add(embeddings)
         self.id_map.extend(metadata)
