@@ -12,3 +12,13 @@ This is a Retrieval-Augmented Generation (RAG) chatbot that:
 
 ```bash
 pip install -r requirements.txt
+```
+Start Streamlit UI:
+
+```bash
+streamlit run app.py
+```
+
+
+
+
