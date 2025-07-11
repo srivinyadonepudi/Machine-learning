@@ -6,10 +6,8 @@ from retriever import Retriever
 from triton_client import TritonClient
 from prompt_builder import build_prompt
 import os
-from typing import List, Tuple
 
 INDEX_PATH = "faiss.index"
-DOCS_PATH = "docs"
 
 st.set_page_config(page_title="RAG Chatbot Demo", layout="wide")
 
@@ -19,10 +17,10 @@ def load_embedding_model():
 
 @st.cache_resource(ttl=3600)
 def load_faiss_index():
-    if os.path.exists(INDEX_PATH):
+    if os.path.exists(INDEX_PATH + ".index"):
         return FaissIndex.load(INDEX_PATH)
     else:
-        return FaissIndex(dim=768)  # assuming 768 dim embeddings
+        return FaissIndex(dim=768)
 
 @st.cache_resource(ttl=3600)
 def load_triton_client():
@@ -36,7 +34,7 @@ def main():
     retriever = Retriever(faiss_index)
     triton_client = load_triton_client()
 
-    # Sidebar: document upload
+    # Document upload
     st.sidebar.header("Upload Documents")
     uploaded_files = st.sidebar.file_uploader(
         "Upload PDF, TXT, DOCX files", accept_multiple_files=True, type=['pdf','txt','docx'])
@@ -61,28 +59,18 @@ def main():
             st.warning("Please enter a question.")
             return
 
-        # Embedded query
         query_emb = embedder.embed_texts([query])[0]
-
-        # Retrieve top-k
         top_chunks = retriever.retrieve(query_emb, top_k=5)
-
-        # Build prompt
         prompt = build_prompt(query, top_chunks)
-
-        # Query LLM via Triton
         answer = triton_client.infer(prompt)
-
-        # Save chat history
         st.session_state.chat_history.append({"query": query, "answer": answer, "context": top_chunks})
 
-    # Display chat history with context snippets
-    for i, chat in enumerate(st.session_state.chat_history[::-1]):
+    for chat in reversed(st.session_state.chat_history):
         st.markdown(f"**Q:** {chat['query']}")
         st.markdown(f"**A:** {chat['answer']}")
         with st.expander("Show retrieved context snippets"):
             for idx, (doc_id, chunk_text) in enumerate(chat["context"]):
-                st.markdown(f"- **Doc {doc_id} - chunk {idx+1}:** {chunk_text[:300]}...")
+                st.markdown(f"- **Doc {doc_id} chunk {idx+1}:** {chunk_text[:300]}...")
 
 if __name__ == "__main__":
     main()
