@@ -1,0 +1,8 @@
+streamlit
+numpy
+faiss-cpu
+nemo_toolkit[all]
+PyPDF2
+python-docx
+tritonclient[grpc]
+torch
